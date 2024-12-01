@@ -1,6 +1,6 @@
 use std::{arch::aarch64::*, fmt::Debug};
 
-fn parse_nums(input: &str) -> (Vec<u32>, usize) {
+fn parse_nums(input: &str, mut right_value_writer: impl FnMut(&mut u32, u32)) -> (Vec<u32>, usize) {
     let input = input.as_bytes();
     let line_len = 5 + 3 + 5 + 1;
     let line_count = input.len() / line_len;
@@ -18,7 +18,7 @@ fn parse_nums(input: &str) -> (Vec<u32>, usize) {
             let low = vshr_n_u32::<16>(vmul_u32(low_split, vdup_n_u32(0x1_0000 + 100)));
             let values = vadd_u32(low, vmul_u32(high, vdup_n_u32(10_000)));
             nums[l] = vget_lane_u32::<0>(values);
-            nums[line_count + l] = vget_lane_u32::<1>(values);
+            right_value_writer(&mut nums[line_count + l], vget_lane_u32::<1>(values));
         }
     }
 
@@ -26,7 +26,7 @@ fn parse_nums(input: &str) -> (Vec<u32>, usize) {
 }
 
 pub fn part_1(input: &str) -> impl Debug {
-    let (mut nums, line_count) = parse_nums(input);
+    let (mut nums, line_count) = parse_nums(input, |t, v| *t = v);
 
     (&mut nums[..line_count]).sort();
     (&mut nums[line_count..]).sort();
@@ -39,41 +39,14 @@ pub fn part_1(input: &str) -> impl Debug {
 }
 
 pub fn part_2(input: &str) -> impl Debug {
-    let (mut nums, line_count) = parse_nums(input);
-
-    (&mut nums[..line_count]).sort();
-    (&mut nums[line_count..]).sort();
+    let mut right_counts = vec![0u16; 100000];
+    let (nums, line_count) = parse_nums(input, |_, v| right_counts[v as usize] += 1);
 
     let left = &nums[..line_count];
-    let right = &nums[line_count..];
 
-    let mut left_idx = 0;
-    let mut right_idx = 0;
     let mut similarity_score = 0;
-    while left_idx < left.len() {
-        let right_slice = &right[right_idx..];
-        let l = left[left_idx];
-        match right_slice.binary_search(&l) {
-            Ok(idx) => {
-                let prev_duplicates = right_slice
-                    .iter()
-                    .rev()
-                    .skip(right_slice.len() - idx)
-                    .position(|&r| r != l)
-                    .unwrap_or(idx);
-                let remaining = &right_slice[idx + 1..];
-                let next_duplicates = remaining
-                    .iter()
-                    .position(|&r| r != l)
-                    .unwrap_or(remaining.len());
-                let duplicates = prev_duplicates + 1 + next_duplicates;
-                similarity_score += l as usize * duplicates;
-            }
-            Err(idx) => {
-                right_idx += idx;
-            }
-        }
-        left_idx += 1;
+    for &l in left {
+        similarity_score += l * u32::from(right_counts[l as usize]);
     }
 
     similarity_score
