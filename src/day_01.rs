@@ -117,8 +117,32 @@ pub fn part_1(input: &str) -> impl Debug {
         right.extend(store);
     });
 
-    left.sort_unstable();
-    right.sort_unstable();
+    const DIGIT_LEN: usize = 9;
+    let mut counts = vec![0u16; 1 << DIGIT_LEN];
+    let mut sort_buf = vec![0; left.len()];
+
+    fn radix_sort<'a>(mut items: &'a mut [u32], mut buf: &'a mut [u32], counts: &mut [u16]) {
+        for i in 0..2 {
+            for &item in items.iter() {
+                let digit = (item >> (i * DIGIT_LEN)) & ((1 << DIGIT_LEN) - 1);
+                counts[digit as usize] += 1;
+            }
+            for j in 1..counts.len() {
+                counts[j] += counts[j - 1];
+            }
+            for &item in items.iter().rev() {
+                let digit = (item >> (i * DIGIT_LEN)) & ((1 << DIGIT_LEN) - 1);
+                counts[digit as usize] -= 1;
+                buf[counts[digit as usize] as usize] = item;
+            }
+
+            std::mem::swap(&mut items, &mut buf);
+            counts.fill(0);
+        }
+    }
+
+    radix_sort(&mut left, &mut sort_buf, &mut counts);
+    radix_sort(&mut right, &mut sort_buf, &mut counts);
 
     left.iter()
         .zip(&right)
