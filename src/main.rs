@@ -1,3 +1,5 @@
+#![feature(vec_into_raw_parts)]
+
 use std::collections::BTreeSet;
 
 mod day_01;
