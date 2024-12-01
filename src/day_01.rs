@@ -28,8 +28,8 @@ fn parse_nums(input: &str, mut right_value_writer: impl FnMut(&mut u32, u32)) ->
 pub fn part_1(input: &str) -> impl Debug {
     let (mut nums, line_count) = parse_nums(input, |t, v| *t = v);
 
-    (&mut nums[..line_count]).sort();
-    (&mut nums[line_count..]).sort();
+    (&mut nums[..line_count]).sort_unstable();
+    (&mut nums[line_count..]).sort_unstable();
 
     (&nums[..line_count])
         .iter()
