@@ -23,3 +23,4 @@ Times include "parsing", i.e. the benchmark measures from the moment the input f
 | *Day* | *Part 1* | *Part 2* |
 |-------|----------|----------|
 |   1   |  5.41 µs |  5.38 µs |
+|   2   |   109 µs |   190 µs |
