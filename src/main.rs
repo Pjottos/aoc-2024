@@ -54,7 +54,7 @@ fn main() {
         match day {
             1 => runner.run(day, day_01::part_1, day_01::part_2),
             2 => runner.run(day, day_02::part_1, day_02::part_2),
-            //3 => runner.run(day, day_03::part_1, day_03::part_2),
+            3 => runner.run(day, day_03::part_1, day_03::part_2),
             //4 => runner.run(day, day_04::part_1, day_04::part_2),
             //5 => runner.run(day, day_05::part_1, day_05::part_2),
             //6 => runner.run(day, day_06::part_1, day_06::part_2),
