@@ -1,4 +1,8 @@
 #![feature(vec_into_raw_parts)]
+#![feature(new_zeroed_alloc)]
+#![allow(incomplete_features)]
+#![feature(generic_const_exprs)]
+#![feature(portable_simd)]
 #![allow(dead_code)]
 
 use std::collections::BTreeSet;
@@ -56,7 +60,7 @@ fn main() {
             2 => runner.run(day, day_02::part_1, day_02::part_2),
             3 => runner.run(day, day_03::part_1, day_03::part_2),
             4 => runner.run(day, day_04::part_1, day_04::part_2),
-            //5 => runner.run(day, day_05::part_1, day_05::part_2),
+            5 => runner.run(day, day_05::part_1, day_05::part_2),
             //6 => runner.run(day, day_06::part_1, day_06::part_2),
             //7 => runner.run(day, day_07::part_1, day_07::part_2),
             //8 => runner.run(day, day_08::part_1, day_08::part_2),
