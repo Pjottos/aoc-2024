@@ -1,25 +1,17 @@
 use std::arch::aarch64::*;
-use std::{cmp::Ordering, collections::BTreeMap, fmt::Debug};
+use std::fmt::Debug;
 
 const RULE_COUNT: usize = 1176;
 const RULES_END: usize = RULE_COUNT * 6;
 
 pub fn part_1(input: &str) -> impl Debug {
     let input = input.as_bytes();
-    assert_eq!(RULES_END % (16 * 3), 0);
 
     unsafe {
         let mut result = 0;
         let rule_map = parse_rules(input);
         parse_updates(input, |update_nums| {
-            let is_invalid = update_nums.iter().enumerate().any(|(i, &n)| {
-                let high = (n >= 64) as usize;
-                let bit = 1 << (n % 64);
-                update_nums[i + 1..]
-                    .iter()
-                    .any(|n2| rule_map[(n2 * 2) as usize + high] & bit != 0)
-            });
-            if !is_invalid {
+            if update_is_valid(update_nums, &rule_map) {
                 result += u32::from(update_nums[update_nums.len() / 2]);
             }
         });
@@ -27,38 +19,49 @@ pub fn part_1(input: &str) -> impl Debug {
         result
     }
 }
+
 pub fn part_2(input: &str) -> impl Debug {
     let input = input.as_bytes();
-    assert_eq!(RULES_END % (16 * 3), 0);
 
     unsafe {
         let mut result = 0;
         let rule_map = parse_rules(input);
         parse_updates(input, |update_nums| {
-            let is_invalid = update_nums.iter().enumerate().any(|(i, &n)| {
-                let high = (n >= 64) as usize;
-                let bit = 1 << (n % 64);
-                update_nums[i + 1..]
-                    .iter()
-                    .any(|&n2| rule_map[(n2 * 2) as usize + high] & bit != 0)
-            });
-            if is_invalid {
-                let idx = update_nums.len() / 2;
-                result += u32::from(
-                    *update_nums
-                        .select_nth_unstable_by(idx, |&a, &b| {
-                            match (
-                                rule_map[(a * 2) as usize + b as usize / 64] & (1 << (b % 64)) != 0,
-                                rule_map[(b * 2) as usize + a as usize / 64] & (1 << (a % 64)) != 0,
-                            ) {
-                                (false, false) => Ordering::Equal,
-                                (false, true) => Ordering::Greater,
-                                (true, false) => Ordering::Less,
-                                (true, true) => panic!("unsolvable rules"),
-                            }
-                        })
-                        .1,
-                );
+            let mut illegal_low = 0;
+            let mut illegal_high = 0;
+            let mut valid = true;
+            let mut encountered_low = 0u64;
+            let mut encountered_high = 0u64;
+            for &n in update_nums.iter().rev() {
+                if n >= 64 {
+                    encountered_high |= 1 << (n % 64);
+                } else {
+                    encountered_low |= 1 << (n % 64);
+                };
+
+                if valid {
+                    let illegal = if n >= 64 { illegal_high } else { illegal_low };
+                    if illegal & (1 << (n % 64)) != 0 {
+                        valid = false;
+                    }
+                    illegal_low |= rule_map[n as usize * 2];
+                    illegal_high |= rule_map[n as usize * 2 + 1];
+                }
+            }
+
+            if !valid {
+                let idx = update_nums.len() as u32 / 2;
+                for &n in &*update_nums {
+                    let low = rule_map[n as usize * 2];
+                    let high = rule_map[n as usize * 2 + 1];
+
+                    if (low & encountered_low).count_ones() + (high & encountered_high).count_ones()
+                        == idx
+                    {
+                        result += u32::from(n);
+                        break;
+                    }
+                }
             }
         });
 
@@ -66,7 +69,23 @@ pub fn part_2(input: &str) -> impl Debug {
     }
 }
 
+fn update_is_valid(update: &[u8], rule_map: &[u64; 128 * 2]) -> bool {
+    let mut illegal_low = 0;
+    let mut illegal_high = 0;
+    for &n in update.iter().rev() {
+        let illegal = if n >= 64 { illegal_high } else { illegal_low };
+        if illegal & (1 << (n % 64)) != 0 {
+            return false;
+        }
+        illegal_low |= rule_map[n as usize * 2];
+        illegal_high |= rule_map[n as usize * 2 + 1];
+    }
+
+    true
+}
+
 unsafe fn parse_rules(input: &[u8]) -> [u64; 128 * 2] {
+    assert_eq!(RULES_END % (16 * 3), 0);
     let mut rule_map = [0u64; 128 * 2];
 
     let mut last_key = 0;
