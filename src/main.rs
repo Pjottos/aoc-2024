@@ -3,6 +3,7 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 #![feature(portable_simd)]
+#![feature(array_windows)]
 #![allow(dead_code)]
 
 use std::collections::BTreeSet;
